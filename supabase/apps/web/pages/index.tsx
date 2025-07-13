@@ -4,11 +4,11 @@ import { supabase } from '../lib/supabase'
 import { haversine } from '../lib/geo'
 import { hashSync } from 'bcryptjs'
 
-const ALLOWED_LAT = 37.422   // example
+const ALLOWED_LAT = 37.422   // example coordinates
 const ALLOWED_LON = -122.084
-const RADIUS_M = 150         // 150 m
+const RADIUS_M = 150         // 150 meter radius
 
-export default function ClockPage() {
+export default function Home() {
   const [pin, setPin] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -20,7 +20,7 @@ export default function ClockPage() {
     }
 
     setLoading(true)
-    setMsg('Checking location…')
+    setMsg('Checking location...')
 
     if (!navigator.geolocation) {
       setMsg('Geolocation is not supported by this browser')
@@ -44,11 +44,12 @@ export default function ClockPage() {
             return
           }
 
-          // Backend verifies IP via RLS on insert
+          // Note: In production, PIN verification should be done server-side
+          // This is just dummy logic for UI demonstration
           const { data: emp } = await supabase
             .from('employees')
             .select('*')
-            .eq('pin_hash', hashSync(pin, 8))   // quick example; real hash comparison done server-side
+            .eq('pin_hash', hashSync(pin, 8))
             .single()
 
           if (!emp) {
@@ -58,19 +59,19 @@ export default function ClockPage() {
           }
 
           const payload = direction === 'in'
-            ? { 
-                employee_id: emp.id, 
-                clock_in: new Date().toISOString(), 
-                in_lat: coords.latitude, 
-                in_lon: coords.longitude, 
-                source: 'mobile' 
+            ? {
+                employee_id: emp.id,
+                clock_in: new Date().toISOString(),
+                in_lat: coords.latitude,
+                in_lon: coords.longitude,
+                source: 'web'
               }
-            : { 
-                employee_id: emp.id, 
-                clock_out: new Date().toISOString(), 
-                out_lat: coords.latitude, 
-                out_lon: coords.longitude, 
-                source: 'mobile' 
+            : {
+                employee_id: emp.id,
+                clock_out: new Date().toISOString(),
+                out_lat: coords.latitude,
+                out_lon: coords.longitude,
+                source: 'web'
               }
 
           const { error } = await supabase.from('clock_entries').insert(payload)
@@ -97,7 +98,7 @@ export default function ClockPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-8">
-          Employee Clock
+          Time Tracker
         </h1>
         
         <div className="space-y-6">
@@ -147,10 +148,10 @@ export default function ClockPage() {
 
         <div className="mt-8 text-center">
           <Link
-            href="/"
+            href="/login"
             className="text-sm text-blue-600 hover:text-blue-800 underline"
           >
-            ← Back to Home
+            Manager Login
           </Link>
         </div>
       </div>
